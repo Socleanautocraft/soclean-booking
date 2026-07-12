@@ -2,518 +2,689 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, maximum-scale=1"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
   <title>Soclean Auto Craft Booking</title>
-
-  <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
   <style>
-    * {
-      box-sizing: border-box;
+    :root {
+      --ink: #171717;
+      --muted: #6f6f6f;
+      --line: #dedede;
+      --surface: #ffffff;
+      --bg: #f3f4f3;
+      --soft: #f7f8f7;
+      --green: #237a43;
+      --green-soft: #eaf5ed;
+      --amber: #9a6611;
+      --amber-soft: #fff4da;
+      --danger: #b3261e;
+      --danger-soft: #fdecea;
+      --radius: 18px;
     }
+
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      padding: 18px 14px 40px;
-      background: #f4f4f4;
-      color: #1f1f1f;
+      min-height: 100vh;
+      padding: 16px 12px calc(38px + env(safe-area-inset-bottom));
+      background: var(--bg);
+      color: var(--ink);
       font-family: Arial, "Noto Sans Thai", sans-serif;
     }
 
-    .container {
+    button, input, select { font: inherit; }
+
+    .app {
       width: 100%;
-      max-width: 560px;
+      max-width: 620px;
       margin: 0 auto;
-      padding: 24px 20px 28px;
-      background: #ffffff;
-      border-radius: 18px;
-      box-shadow: 0 5px 22px rgba(0, 0, 0, 0.08);
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: 0 10px 34px rgba(0,0,0,.07);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 26px 20px 18px;
+      text-align: center;
+      border-bottom: 1px solid #f0f0f0;
     }
 
     .logo {
-      width: 82px;
-      height: 82px;
+      width: 86px;
+      height: 86px;
       margin: 0 auto 14px;
       border-radius: 50%;
-      background: #111111;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: 11px;
-      line-height: 1.3;
-      letter-spacing: 0.4px;
+      display: grid;
+      place-items: center;
+      background: #111;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.25;
+      letter-spacing: .7px;
     }
 
-    h1 {
-      margin: 0;
-      text-align: center;
-      font-size: 26px;
-    }
+    h1 { margin: 0; font-size: 27px; }
+    .subtitle { margin: 7px 0 0; color: var(--muted); }
 
-    .subtitle {
-      margin: 7px 0 22px;
-      text-align: center;
-      color: #666666;
-      font-size: 15px;
+    .profile {
+      display: none;
+      margin: 18px 18px 0;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #f0f6f1;
+      font-size: 14px;
     }
 
     .loading {
-      padding: 32px 10px;
+      padding: 38px 22px;
       text-align: center;
-      color: #666666;
+      color: var(--muted);
       line-height: 1.7;
     }
 
-    .profile-box {
-      display: none;
-      margin-bottom: 20px;
-      padding: 12px 14px;
-      border-radius: 11px;
-      background: #f1f7f1;
-      font-size: 14px;
-      line-height: 1.5;
+    #bookingApp { display: none; }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 18px;
+      border-bottom: 1px solid #f1f1f1;
     }
 
-    .field {
-      margin-bottom: 17px;
+    .step-dot {
+      min-width: 0;
+      text-align: center;
+      color: #9a9a9a;
+      font-size: 11px;
+      line-height: 1.35;
     }
 
-    label {
-      display: block;
-      margin-bottom: 7px;
-      font-size: 15px;
-      font-weight: bold;
+    .step-dot span {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 5px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #ececec;
+      font-weight: 700;
     }
 
-    .required {
-      color: #c62828;
+    .step-dot.active { color: var(--ink); font-weight: 700; }
+    .step-dot.active span, .step-dot.done span { background: #111; color: white; }
+
+    .panel { display: none; padding: 22px 18px 20px; }
+    .panel.active { display: block; }
+
+    .panel h2 { margin: 0 0 6px; font-size: 22px; }
+    .helper { margin: 0 0 20px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+    .service-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
-    input,
-    select {
+    .choice {
+      min-height: 76px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: white;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .choice.selected { border: 2px solid #111; background: #f6f6f6; }
+    .choice strong { display: block; font-size: 15px; }
+    .choice small { display: block; margin-top: 4px; color: var(--muted); line-height: 1.35; }
+
+    .field { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 7px; font-weight: 700; }
+    .required { color: #c62828; }
+
+    input, select {
       width: 100%;
-      padding: 13px 12px;
-      border: 1px solid #cccccc;
-      border-radius: 10px;
-      background: #ffffff;
+      padding: 14px 13px;
+      border: 1px solid #cfcfcf;
+      border-radius: 13px;
+      background: white;
       font-size: 16px;
       outline: none;
     }
 
-    input:focus,
-    select:focus {
-      border-color: #222222;
+    input:focus, select:focus { border-color: #111; box-shadow: 0 0 0 3px rgba(0,0,0,.06); }
+
+    .date-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(76px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 16px;
     }
 
-    button {
-      width: 100%;
-      margin-top: 8px;
-      padding: 15px;
-      border: none;
-      border-radius: 12px;
-      background: #111111;
-      color: #ffffff;
-      font-size: 17px;
-      font-weight: bold;
+    .date-card {
+      padding: 10px 8px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      text-align: center;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .date-card.selected { background: #111; color: white; border-color: #111; }
+    .date-card .dow { font-size: 12px; opacity: .72; }
+    .date-card .day { margin-top: 3px; font-size: 19px; font-weight: 800; }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .slot {
+      padding: 12px 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      text-align: left;
       cursor: pointer;
     }
 
-    button:disabled {
-      background: #999999;
-      cursor: not-allowed;
+    .slot-time { display: block; font-size: 18px; font-weight: 800; }
+    .slot-status { display: block; margin-top: 4px; font-size: 12px; }
+    .slot.available .slot-status { color: var(--green); }
+    .slot.limited { background: var(--amber-soft); border-color: #ebc975; }
+    .slot.limited .slot-status { color: var(--amber); }
+    .slot.full { background: #f1f1f1; color: #9a9a9a; cursor: not-allowed; }
+    .slot.selected { outline: 3px solid #111; }
+
+    .availability-state {
+      padding: 22px 12px;
+      border-radius: 14px;
+      background: var(--soft);
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.55;
     }
 
-    #bookingForm {
-      display: none;
+    .review {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
     }
+
+    .review-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 10px;
+      padding: 12px 13px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+
+    .review-row:last-child { border-bottom: 0; }
+    .review-row span:first-child { color: var(--muted); }
+    .review-row strong { overflow-wrap: anywhere; }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1.35fr;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn.primary { background: #111; color: white; }
+    .btn.secondary { background: #ececec; color: #222; }
+    .btn:disabled { background: #aaa; color: white; cursor: not-allowed; }
 
     .status {
       display: none;
-      margin-top: 17px;
+      margin: 0 18px 20px;
       padding: 14px;
-      border-radius: 10px;
+      border-radius: 13px;
       text-align: center;
       line-height: 1.6;
     }
 
-    .status.success {
-      display: block;
-      background: #e8f5e9;
-      color: #176b2c;
-    }
+    .status.success { display: block; background: var(--green-soft); color: #176b2c; }
+    .status.error { display: block; background: var(--danger-soft); color: var(--danger); }
 
-    .status.error {
-      display: block;
-      background: #fdecea;
-      color: #b3261e;
-    }
+    .note { margin: 18px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; text-align: center; }
 
-    .note {
-      margin-top: 17px;
-      color: #777777;
-      font-size: 12px;
-      line-height: 1.6;
-      text-align: center;
+    @media (max-width: 420px) {
+      .service-grid, .time-grid { grid-template-columns: 1fr; }
+      .review-row { grid-template-columns: 104px 1fr; }
+      .steps { padding-left: 12px; padding-right: 12px; }
+      .step-dot { font-size: 10px; }
     }
   </style>
 </head>
-
 <body>
-  <main class="container">
-    <div class="logo">
-      SOCLEAN<br>AUTO CRAFT
-    </div>
+  <main class="app">
+    <section class="card">
+      <header class="hero">
+        <div class="logo">SOCLEAN<br>AUTO CRAFT</div>
+        <h1>จองคิวออนไลน์</h1>
+        <p class="subtitle">ดูคิวว่างก่อนเลือกวันและเวลา</p>
+      </header>
 
-    <h1>จองคิวออนไลน์</h1>
-    <p class="subtitle">Soclean Auto Craft</p>
+      <div id="loading" class="loading">กำลังเชื่อมต่อกับ LINE<br>กรุณารอสักครู่ค่ะ</div>
+      <div id="profileBox" class="profile">เข้าสู่ระบบด้วย LINE: <strong id="displayName"></strong></div>
 
-    <div id="loading" class="loading">
-      กำลังเชื่อมต่อกับ LINE<br>
-      กรุณารอสักครู่ค่ะ
-    </div>
+      <form id="bookingApp" novalidate>
+        <nav class="steps" aria-label="ขั้นตอนการจอง">
+          <div class="step-dot active" data-step-dot="1"><span>1</span>บริการ</div>
+          <div class="step-dot" data-step-dot="2"><span>2</span>วันและเวลา</div>
+          <div class="step-dot" data-step-dot="3"><span>3</span>ข้อมูลรถ</div>
+          <div class="step-dot" data-step-dot="4"><span>4</span>ตรวจสอบ</div>
+        </nav>
 
-    <div id="profileBox" class="profile-box">
-      เข้าสู่ระบบด้วย LINE:
-      <strong id="displayName"></strong>
-    </div>
+        <section class="panel active" data-panel="1">
+          <h2>เลือกบริการ</h2>
+          <p class="helper">เลือกบริการหลักที่ต้องการเข้ารับบริการ</p>
+          <div id="serviceGrid" class="service-grid"></div>
+          <div class="actions" style="grid-template-columns:1fr">
+            <button class="btn primary" type="button" data-next="2">เลือกวันและเวลา</button>
+          </div>
+        </section>
 
-    <form id="bookingForm">
-      <div class="field">
-        <label for="name">
-          ชื่อหรือชื่อเล่น <span class="required">*</span>
-        </label>
+        <section class="panel" data-panel="2">
+          <h2>เลือกวันและเวลา</h2>
+          <p class="helper">ระบบแสดงจำนวนคิวคงเหลือของแต่ละช่วงเวลาแบบล่าสุด</p>
+          <div id="dateStrip" class="date-strip"></div>
+          <div class="field">
+            <label for="bookingDate">หรือเลือกวันที่จากปฏิทิน</label>
+            <input id="bookingDate" type="date" required>
+          </div>
+          <div id="availabilityState" class="availability-state">กรุณาเลือกวันที่ค่ะ</div>
+          <div id="timeGrid" class="time-grid" hidden></div>
+          <input id="bookingTime" type="hidden" required>
+          <div class="actions">
+            <button class="btn secondary" type="button" data-back="1">ย้อนกลับ</button>
+            <button class="btn primary" type="button" data-next="3">กรอกข้อมูลรถ</button>
+          </div>
+        </section>
 
-        <input
-          id="name"
-          type="text"
-          placeholder="เช่น ไข่มุก"
-          required
-        >
-      </div>
+        <section class="panel" data-panel="3">
+          <h2>ข้อมูลลูกค้าและรถ</h2>
+          <p class="helper">ข้อมูลนี้ใช้สำหรับติดต่อและยืนยันคิวเท่านั้น</p>
 
-      <div class="field">
-        <label for="tel">
-          เบอร์โทรศัพท์ <span class="required">*</span>
-        </label>
+          <div class="field"><label for="name">ชื่อหรือชื่อเล่น <span class="required">*</span></label><input id="name" type="text" placeholder="เช่น ไข่มุก" required></div>
+          <div class="field"><label for="tel">เบอร์โทรศัพท์ <span class="required">*</span></label><input id="tel" type="tel" inputmode="numeric" maxlength="10" placeholder="เช่น 0812345678" required></div>
+          <div class="field"><label for="plateNo">ทะเบียนรถ <span class="required">*</span></label><input id="plateNo" type="text" placeholder="เช่น 4ขบ3684" required></div>
+          <div class="field"><label for="carBrand">แบรนด์รถ <span class="required">*</span></label><input id="carBrand" type="text" placeholder="เช่น BYD" required></div>
+          <div class="field"><label for="model">รุ่นรถ <span class="required">*</span></label><input id="model" type="text" placeholder="เช่น Atto 3" required></div>
 
-        <input
-          id="tel"
-          type="tel"
-          inputmode="numeric"
-          maxlength="10"
-          placeholder="เช่น 0812345678"
-          required
-        >
-      </div>
+          <div class="actions">
+            <button class="btn secondary" type="button" data-back="2">ย้อนกลับ</button>
+            <button class="btn primary" type="button" data-next="4">ตรวจสอบข้อมูล</button>
+          </div>
+        </section>
 
-      <div class="field">
-        <label for="plateNo">
-          ทะเบียนรถ <span class="required">*</span>
-        </label>
-
-        <input
-          id="plateNo"
-          type="text"
-          placeholder="เช่น 4ขบ3684"
-          required
-        >
-      </div>
-
-      <div class="field">
-        <label for="carBrand">
-          แบรนด์รถ <span class="required">*</span>
-        </label>
-
-        <input
-          id="carBrand"
-          type="text"
-          placeholder="เช่น BYD"
-          required
-        >
-      </div>
-
-      <div class="field">
-        <label for="model">
-          รุ่นรถ <span class="required">*</span>
-        </label>
-
-        <input
-          id="model"
-          type="text"
-          placeholder="เช่น Atto 3"
-          required
-        >
-      </div>
-
-      <div class="field">
-        <label for="service">
-          บริการที่ต้องการ <span class="required">*</span>
-        </label>
-
-        <select id="service" required>
-          <option value="">— กรุณาเลือกบริการ —</option>
-          <option value="ล้างสี / ดูดฝุ่น">ล้างสี / ดูดฝุ่น</option>
-          <option value="ล้างเคลือบสี">ล้างเคลือบสี</option>
-          <option value="ล้างห้องเครื่อง">ล้างห้องเครื่อง</option>
-          <option value="ฟอกเบาะ / ซักภายใน">ฟอกเบาะ / ซักภายใน</option>
-          <option value="ขัดสีรถ">ขัดสีรถ</option>
-          <option value="ขัดลบรอย">ขัดลบรอย</option>
-          <option value="เคลือบแก้ว">เคลือบแก้ว</option>
-          <option value="เคลือบกราฟีน">เคลือบกราฟีน</option>
-          <option value="ติดฟิล์มกรองแสง">ติดฟิล์มกรองแสง</option>
-          <option value="ติดฟิล์ม PPF">ติดฟิล์ม PPF</option>
-          <option value="Wrap เปลี่ยนสีรถ">Wrap เปลี่ยนสีรถ</option>
-          <option value="บริการอื่น ๆ">บริการอื่น ๆ</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="bookingDate">
-          วันที่ต้องการจอง <span class="required">*</span>
-        </label>
-
-        <input
-          id="bookingDate"
-          type="date"
-          required
-        >
-      </div>
-
-      <div class="field">
-        <label for="bookingTime">
-          เวลาที่ต้องการจอง <span class="required">*</span>
-        </label>
-
-        <input
-          id="bookingTime"
-          type="time"
-          required
-        >
-      </div>
-
-      <button id="submitButton" type="submit">
-        ยืนยันการจองคิว
-      </button>
+        <section class="panel" data-panel="4">
+          <h2>ตรวจสอบก่อนยืนยัน</h2>
+          <p class="helper">กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนส่งคำขอจอง</p>
+          <div id="reviewBox" class="review"></div>
+          <div class="actions">
+            <button class="btn secondary" type="button" data-back="3">แก้ไขข้อมูล</button>
+            <button id="submitButton" class="btn primary" type="submit">ส่งคำขอจองคิว</button>
+          </div>
+          <p class="note">ระบบ Make จะตรวจคิวซ้ำอีกครั้งก่อนบันทึก เพื่อป้องกันกรณีมีลูกค้ากดจองพร้อมกันค่ะ</p>
+        </section>
+      </form>
 
       <div id="statusBox" class="status"></div>
-
-      <p class="note">
-        หลังจากกดส่ง ระบบจะบันทึกข้อมูลและส่งข้อความยืนยัน
-        กลับไปยัง LINE ของคุณค่ะ
-      </p>
-    </form>
+    </section>
   </main>
 
   <script>
-    /*
-      LIFF ID ของ Soclean Booking
-      LIFF ID ไม่ใช่ Channel secret หรือ Channel access token
-    */
     const LIFF_ID = "2010677402-picFYAiN";
-
-    /*
-      สำคัญ:
-      นำ Webhook URL ที่คัดลอกจาก Make
-      มาวางแทนข้อความระหว่างเครื่องหมายคำพูดด้านล่าง
-    */
     const WEBHOOK_URL = "https://hook.eu1.make.com/4vkgd2y3kmy2hnyrnrtaad4dkhw89ot3";
+
+    // วาง URL จาก Google Apps Script Web App หลัง Deploy แล้ว
+    const AVAILABILITY_API_URL = "https://script.google.com/macros/s/AKfycbx_LELFkH-g1awYnTbhdflrjESzrsXhpkAOQ3MBSRiWlMmjwyZiOZPTWPAkRSrtNVqWtw/exec";
+
+    const MAX_BOOKINGS_PER_SLOT = 2;
+    const BOOKING_DAYS_AHEAD = 30;
+    const TIME_SLOTS = [
+      "08:00", "09:00", "10:00", "11:00", "12:00",
+      "13:00", "14:00", "15:00", "16:00", "17:00",
+      "18:00", "19:00", "20:00"
+    ];
+
+    const SERVICES = [
+      ["ล้างสี / ดูดฝุ่น", "บริการล้างรถพื้นฐาน"],
+      ["ล้างเคลือบสี", "เพิ่มความเงาและปกป้องสีรถ"],
+      ["ล้างห้องเครื่อง", "ทำความสะอาดห้องเครื่อง"],
+      ["ฟอกเบาะ / ซักภายใน", "ดูแลภายในรถแบบล้ำลึก"],
+      ["ขัดสีรถ", "ฟื้นฟูความเงาของสีรถ"],
+      ["ขัดลบรอย", "ลดรอยขนแมวและรอยตื้น"],
+      ["เคลือบแก้ว", "ปกป้องสีรถระยะยาว"],
+      ["เคลือบกราฟีน", "การปกป้องระดับพรีเมียม"],
+      ["ติดฟิล์มกรองแสง", "ประเมินรายละเอียดก่อนเข้ารับบริการ"],
+      ["ติดฟิล์ม PPF", "ประเมินพื้นที่ติดตั้งก่อน"],
+      ["Wrap เปลี่ยนสีรถ", "ประเมินสีและรุ่นรถก่อน"],
+      ["บริการอื่น ๆ", "ให้ทางร้านติดต่อกลับเพื่อสอบถามเพิ่มเติม"]
+    ];
 
     let lineUserId = "";
     let lineDisplayName = "";
+    let selectedService = "";
+    let currentStep = 1;
+    let availabilityRequestId = 0;
 
     window.addEventListener("load", initializeApp);
 
     async function initializeApp() {
-      const loading = document.getElementById("loading");
-      const bookingForm = document.getElementById("bookingForm");
-      const profileBox = document.getElementById("profileBox");
+      renderServices();
+      configureDates();
+      bindEvents();
 
       try {
-        await liff.init({
-          liffId: LIFF_ID
-        });
-
-        /*
-          หากเปิดจากเบราว์เซอร์ภายนอก
-          ระบบจะพาเข้าสู่ระบบ LINE แล้วกลับมาหน้าเดิม
-        */
+        await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
-          liff.login({
-            redirectUri: window.location.href
-          });
-
+          liff.login({ redirectUri: window.location.href });
           return;
         }
 
         const profile = await liff.getProfile();
-
-        if (!profile || !profile.userId) {
-          throw new Error("ไม่สามารถรับ LINE User ID ได้");
-        }
+        if (!profile?.userId) throw new Error("ไม่สามารถรับ LINE User ID ได้");
 
         lineUserId = profile.userId;
         lineDisplayName = profile.displayName || "ผู้ใช้ LINE";
-
-        document.getElementById("displayName").textContent =
-          lineDisplayName;
-
-        loading.style.display = "none";
-        profileBox.style.display = "block";
-        bookingForm.style.display = "block";
-
-        setMinimumBookingDate();
+        document.getElementById("displayName").textContent = lineDisplayName;
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("profileBox").style.display = "block";
+        document.getElementById("bookingApp").style.display = "block";
       } catch (error) {
         console.error(error);
-
-        loading.innerHTML =
-          "เชื่อมต่อ LINE ไม่สำเร็จค่ะ<br>" +
-          escapeHtml(
-            error && error.message
-              ? error.message
-              : String(error)
-          );
+        document.getElementById("loading").innerHTML =
+          "เชื่อมต่อ LINE ไม่สำเร็จค่ะ<br>" + escapeHtml(error?.message || String(error));
       }
     }
 
-    function setMinimumBookingDate() {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, "0");
-      const day = String(today.getDate()).padStart(2, "0");
-
-      document.getElementById("bookingDate").min =
-        '${year}-${month}-${day}';
+    function bindEvents() {
+      document.querySelectorAll("[data-next]").forEach(button => {
+        button.addEventListener("click", () => goNext(Number(button.dataset.next)));
+      });
+      document.querySelectorAll("[data-back]").forEach(button => {
+        button.addEventListener("click", () => showStep(Number(button.dataset.back)));
+      });
+      document.getElementById("bookingDate").addEventListener("change", event => {
+        selectDate(event.target.value, false);
+      });
+      document.getElementById("bookingApp").addEventListener("submit", submitBooking);
     }
 
-    document
-      .getElementById("bookingForm")
-      .addEventListener("submit", submitBooking);
+    function renderServices() {
+      const grid = document.getElementById("serviceGrid");
+      grid.innerHTML = SERVICES.map(([name, detail]) => `
+        <button type="button" class="choice" data-service="${escapeHtml(name)}">
+          <strong>${escapeHtml(name)}</strong><small>${escapeHtml(detail)}</small>
+        </button>`).join("");
+
+      grid.querySelectorAll("[data-service]").forEach(button => {
+        button.addEventListener("click", () => {
+          selectedService = button.dataset.service;
+          grid.querySelectorAll(".choice").forEach(item => item.classList.remove("selected"));
+          button.classList.add("selected");
+          clearStatus();
+        });
+      });
+    }
+
+    function configureDates() {
+      const today = startOfDay(new Date());
+      const max = new Date(today);
+      max.setDate(max.getDate() + BOOKING_DAYS_AHEAD);
+      const input = document.getElementById("bookingDate");
+      input.min = toDateKey(today);
+      input.max = toDateKey(max);
+
+      const strip = document.getElementById("dateStrip");
+      const formatterDow = new Intl.DateTimeFormat("th-TH", { weekday: "short" });
+      const formatterMonth = new Intl.DateTimeFormat("th-TH", { month: "short" });
+
+      const cards = [];
+      for (let i = 0; i < 8; i += 1) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const key = toDateKey(date);
+        cards.push(`
+          <button type="button" class="date-card" data-date="${key}">
+            <div class="dow">${formatterDow.format(date)}</div>
+            <div class="day">${date.getDate()}</div>
+            <div class="dow">${formatterMonth.format(date)}</div>
+          </button>`);
+      }
+      strip.innerHTML = cards.join("");
+      strip.querySelectorAll("[data-date]").forEach(card => {
+        card.addEventListener("click", () => selectDate(card.dataset.date, true));
+      });
+    }
+
+    async function selectDate(dateKey, syncInput = true) {
+      if (!dateKey) return;
+      if (syncInput) document.getElementById("bookingDate").value = dateKey;
+      document.querySelectorAll(".date-card").forEach(card => {
+        card.classList.toggle("selected", card.dataset.date === dateKey);
+      });
+      document.getElementById("bookingTime").value = "";
+      await loadAvailability(dateKey);
+    }
+
+    async function loadAvailability(dateKey) {
+      const state = document.getElementById("availabilityState");
+      const grid = document.getElementById("timeGrid");
+      const requestId = ++availabilityRequestId;
+      grid.hidden = true;
+      state.style.display = "block";
+      state.textContent = "กำลังตรวจสอบคิวว่าง...";
+
+      try {
+        if (!AVAILABILITY_API_URL || AVAILABILITY_API_URL.includes("วาง-GOOGLE")) {
+          throw new Error("ยังไม่ได้เชื่อม Google Apps Script สำหรับอ่านคิวว่าง");
+        }
+        const data = await jsonp(`${AVAILABILITY_API_URL}?action=availability&date=${encodeURIComponent(dateKey)}`);
+        if (requestId !== availabilityRequestId) return;
+        if (!data?.ok) throw new Error(data?.message || "อ่านข้อมูลคิวไม่สำเร็จ");
+        renderTimeSlots(data.counts || {});
+      } catch (error) {
+        console.error(error);
+        state.innerHTML = `${escapeHtml(error.message)}<br><small>กรุณาตั้งค่า URL ตามไฟล์ SETUP.md</small>`;
+      }
+    }
+
+    function renderTimeSlots(counts) {
+      const state = document.getElementById("availabilityState");
+      const grid = document.getElementById("timeGrid");
+      state.style.display = "none";
+      grid.hidden = false;
+
+      grid.innerHTML = TIME_SLOTS.map(time => {
+        const booked = Number(counts[time] || 0);
+        const remaining = Math.max(0, MAX_BOOKINGS_PER_SLOT - booked);
+        const full = remaining === 0;
+        const limited = remaining === 1;
+        const status = full ? "เต็ม" : limited ? "เหลือ 1 คิว" : `ว่าง ${remaining} คิว`;
+        const cls = full ? "full" : limited ? "limited" : "available";
+        return `<button type="button" class="slot ${cls}" data-time="${time}" ${full ? "disabled" : ""}>
+          <span class="slot-time">${time}</span><span class="slot-status">${status}</span>
+        </button>`;
+      }).join("");
+
+      grid.querySelectorAll(".slot:not(:disabled)").forEach(slot => {
+        slot.addEventListener("click", () => {
+          grid.querySelectorAll(".slot").forEach(item => item.classList.remove("selected"));
+          slot.classList.add("selected");
+          document.getElementById("bookingTime").value = slot.dataset.time;
+          clearStatus();
+        });
+      });
+    }
+
+    function goNext(step) {
+      clearStatus();
+      if (currentStep === 1 && !selectedService) return showError("กรุณาเลือกบริการก่อนค่ะ");
+      if (currentStep === 2) {
+        if (!getValue("bookingDate")) return showError("กรุณาเลือกวันที่ค่ะ");
+        if (!getValue("bookingTime")) return showError("กรุณาเลือกช่วงเวลาที่ยังว่างค่ะ");
+      }
+      if (currentStep === 3 && !validateCustomerFields()) return;
+      if (step === 4) renderReview();
+      showStep(step);
+    }
+
+    function showStep(step) {
+      currentStep = step;
+      document.querySelectorAll("[data-panel]").forEach(panel => {
+        panel.classList.toggle("active", Number(panel.dataset.panel) === step);
+      });
+      document.querySelectorAll("[data-step-dot]").forEach(dot => {
+        const value = Number(dot.dataset.stepDot);
+        dot.classList.toggle("active", value === step);
+        dot.classList.toggle("done", value < step);
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function validateCustomerFields() {
+      const required = ["name", "tel", "plateNo", "carBrand", "model"];
+      for (const id of required) {
+        if (!getValue(id)) {
+          document.getElementById(id).focus();
+          showError("กรุณากรอกข้อมูลให้ครบทุกช่องค่ะ");
+          return false;
+        }
+      }
+      const tel = getValue("tel").replace(/\D/g, "");
+      if (!/^0\d{9}$/.test(tel)) {
+        document.getElementById("tel").focus();
+        showError("กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลักค่ะ");
+        return false;
+      }
+      return true;
+    }
+
+    function renderReview() {
+      const dateText = formatThaiDate(getValue("bookingDate"));
+      const rows = [
+        ["บริการ", selectedService], ["วันและเวลา", `${dateText} เวลา ${getValue("bookingTime")} น.`],
+        ["ชื่อ", getValue("name")], ["เบอร์โทร", getValue("tel")],
+        ["รถ", `${getValue("carBrand")} ${getValue("model")}`], ["ทะเบียน", getValue("plateNo")]
+      ];
+      document.getElementById("reviewBox").innerHTML = rows.map(([label, value]) =>
+        `<div class="review-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`
+      ).join("");
+    }
 
     async function submitBooking(event) {
       event.preventDefault();
-
-      const submitButton =
-        document.getElementById("submitButton");
-
       clearStatus();
+      if (!lineUserId) return showError("ไม่พบ LINE User ID กรุณาปิดแล้วเปิดหน้าจองผ่าน LINE ใหม่ค่ะ");
+      if (!validateCustomerFields()) return showStep(3);
 
-      if (
-        !WEBHOOK_URL ||
-        WEBHOOK_URL === "วาง-MAKE-WEBHOOK-URL-ตรงนี้"
-      ) {
-        showError("ยังไม่ได้ใส่ Make Webhook URL ในโค้ดค่ะ");
-        return;
-      }
-
-      if (!lineUserId) {
-        showError(
-          "ไม่พบ LINE User ID กรุณาปิดแล้วเปิดหน้าจองผ่าน LINE ใหม่ค่ะ"
-        );
-
-        return;
-      }
-
-      const tel = document
-        .getElementById("tel")
-        .value
-        .replace(/[^0-9]/g, "");
-
-      if (!/^0[0-9]{9}$/.test(tel)) {
-        showError("กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลักค่ะ");
-        return;
-      }
-
-      const data = new URLSearchParams();
-
-      data.append("timestamp", new Date().toISOString());
-      data.append("name", getValue("name"));
-      data.append("tel", tel);
-      data.append("plateNo", getValue("plateNo"));
-      data.append("carBrand", getValue("carBrand"));
-      data.append("model", getValue("model"));
-      data.append("service", getValue("service"));
-      data.append("bookingDate", getValue("bookingDate"));
-      data.append("bookingTime", getValue("bookingTime"));
-      data.append("lineUserId", lineUserId);
-      data.append("lineDisplayName", lineDisplayName);
-      data.append("source", "LIFF Soclean Booking");
-      data.append("action", "booking");
-      
+      const submitButton = document.getElementById("submitButton");
       submitButton.disabled = true;
-      submitButton.textContent = "กำลังส่งข้อมูล...";
+      submitButton.textContent = "กำลังตรวจคิวและส่งข้อมูล...";
 
       try {
-        /*
-          no-cors ช่วยให้หน้าเว็บส่งข้อมูลข้ามโดเมน
-          ไปยัง Make Webhook ได้จาก GitHub Pages
-        */
-        await fetch(WEBHOOK_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: data
-        });
+        const latest = await jsonp(`${AVAILABILITY_API_URL}?action=availability&date=${encodeURIComponent(getValue("bookingDate"))}`);
+        const latestCount = Number(latest?.counts?.[getValue("bookingTime")] || 0);
+        if (!latest?.ok || latestCount >= MAX_BOOKINGS_PER_SLOT) {
+          throw new Error("ช่วงเวลานี้เพิ่งเต็ม กรุณากลับไปเลือกเวลาอื่นค่ะ");
+        }
 
-        showSuccess(
-          "รับข้อมูลการจองเรียบร้อยแล้วค่ะ ✅<br>" +
-          "กรุณารอข้อความยืนยันจาก LINE ของร้าน"
-        );
+        const data = new URLSearchParams();
+        data.append("timestamp", new Date().toISOString());
+        data.append("name", getValue("name"));
+        data.append("tel", getValue("tel").replace(/\D/g, ""));
+        data.append("plateNo", getValue("plateNo"));
+        data.append("carBrand", getValue("carBrand"));
+        data.append("model", getValue("model"));
+        data.append("service", selectedService);
+        data.append("bookingDate", getValue("bookingDate"));
+        data.append("bookingTime", getValue("bookingTime"));
+        data.append("lineUserId", lineUserId);
+        data.append("lineDisplayName", lineDisplayName);
+        data.append("source", "LIFF Soclean Booking");
+        data.append("action", "booking");
 
-        document.getElementById("bookingForm").reset();
-        setMinimumBookingDate();
-
-        window.scrollTo({
-          top: document.body.scrollHeight,
-          behavior: "smooth"
-        });
+        await fetch(WEBHOOK_URL, { method: "POST", mode: "no-cors", body: data });
+        document.getElementById("bookingApp").style.display = "none";
+        showSuccess("ส่งคำขอจองเรียบร้อยแล้วค่ะ ✅<br>ระบบจะส่งผลการรับจองกลับทาง LINE");
       } catch (error) {
         console.error(error);
-
-        showError(
-          "ส่งข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่ค่ะ"
-        );
+        showError(error?.message || "ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่ค่ะ");
+        if ((error?.message || "").includes("เต็ม")) showStep(2);
       } finally {
         submitButton.disabled = false;
-        submitButton.textContent = "ยืนยันการจองคิว";
+        submitButton.textContent = "ส่งคำขอจองคิว";
       }
     }
 
-    function getValue(id) {
-      return document.getElementById(id).value.trim();
+    function jsonp(url) {
+      return new Promise((resolve, reject) => {
+        const callback = `socleanCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement("script");
+        const timeout = setTimeout(() => cleanup(new Error("เชื่อมต่อข้อมูลคิวช้าเกินไป กรุณาลองใหม่")), 12000);
+        function cleanup(error, data) {
+          clearTimeout(timeout);
+          delete window[callback];
+          script.remove();
+          error ? reject(error) : resolve(data);
+        }
+        window[callback] = data => cleanup(null, data);
+        script.onerror = () => cleanup(new Error("เชื่อมต่อระบบคิวไม่ได้"));
+        script.src = `${url}${url.includes("?") ? "&" : "?"}callback=${callback}`;
+        document.body.appendChild(script);
+      });
     }
 
+    function getValue(id) { return document.getElementById(id).value.trim(); }
+    function startOfDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
+    function toDateKey(date) {
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+    }
+    function formatThaiDate(key) {
+      const [y,m,d] = key.split("-").map(Number);
+      return new Intl.DateTimeFormat("th-TH", { day:"numeric", month:"long", year:"numeric" }).format(new Date(y,m-1,d));
+    }
     function clearStatus() {
-      const statusBox = document.getElementById("statusBox");
-
-      statusBox.className = "status";
-      statusBox.textContent = "";
+      const box = document.getElementById("statusBox");
+      box.className = "status"; box.textContent = "";
     }
-
     function showError(message) {
-      const statusBox = document.getElementById("statusBox");
-
-      statusBox.className = "status error";
-      statusBox.textContent = message;
+      const box = document.getElementById("statusBox");
+      box.className = "status error"; box.textContent = message;
+      box.scrollIntoView({ behavior:"smooth", block:"center" });
     }
-
     function showSuccess(message) {
-      const statusBox = document.getElementById("statusBox");
-
-      statusBox.className = "status success";
-      statusBox.innerHTML = message;
+      const box = document.getElementById("statusBox");
+      box.className = "status success"; box.innerHTML = message;
+      box.scrollIntoView({ behavior:"smooth", block:"center" });
     }
-
     function escapeHtml(value) {
-      const div = document.createElement("div");
-      div.textContent = value;
-      return div.innerHTML;
+      const div = document.createElement("div"); div.textContent = String(value ?? ""); return div.innerHTML;
     }
   </script>
 </body>
